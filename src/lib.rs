@@ -42,6 +42,24 @@ pub fn binary_ones_count(number: u32) -> u32 {
     count
 }
 
+pub fn binary_ones_count_sub_method(number: u32) -> u32 {
+    match number {
+        0 => 0,
+        number => {
+            let mut number = number;
+            let mut count = 0u32;
+            loop {
+                number &= number - 1;
+                count += 1;
+                if number == 0 {
+                    break;
+                }
+            }
+            count
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -76,19 +94,29 @@ mod tests {
         str = bin_rep_str(1);
         assert_eq!(str, String::from("1"));
     }
-    
-    #[test]
-    fn test_binary_ones_count() {
-        let mut count = binary_ones_count(228);
+
+    fn general_test_binary_ones_count<F>(f: F) where
+        F: Fn(u32) -> u32 {
+        let mut count = f(228);
         assert_eq!(count, 4);
         
-        count = binary_ones_count(u32::MAX);
+        count = f(u32::MAX);
         assert_eq!(count, 32);
         
-        count = binary_ones_count(u32::MIN);
+        count = f(u32::MIN);
         assert_eq!(count, 0);
         
-        count = binary_ones_count(1);
+        count = f(1);
         assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn test_binary_ones_count() {
+        general_test_binary_ones_count(binary_ones_count);
+    }
+
+    #[test]
+    fn test_binary_ones_count_sub_method() {
+        general_test_binary_ones_count(binary_ones_count_sub_method);
     }
 }
