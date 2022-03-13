@@ -1,6 +1,6 @@
 use std::io::Write;
 use std::collections::LinkedList;
-use std::ops::{Shl, Shr};
+use std::ops::{Shl, Shr, BitXor};
 use std::mem;
 
 #[derive(PartialEq, Debug)]
@@ -17,7 +17,8 @@ pub fn power_of_two(power: u32) -> Result<u32, Overflow> {
     }
 }
 
-fn process_binary_ones<F>(number: u32, mut f: F) where
+fn process_binary_ones<F>(number: u32, mut f: F)
+where
     F: FnMut(u32) {
     let mut number = number;
     loop {
@@ -102,7 +103,8 @@ pub fn hob_comp_pot(number: u32) -> Option<u32> {
     None
 }
 
-fn manipulate_bit<F>(index: u32, f: F) -> Option<u32> where
+fn manipulate_bit<F>(index: u32, f: F) -> Option<u32>
+where
     F: Fn() -> u32 {
     if index >= u32::BITS {
         return None;
@@ -139,7 +141,8 @@ pub fn invert_bit(number: u32, index: u32) -> Option<u32> {
     )
 }
 
-fn circular_sh_base<F1, F2>(byte: u8, count: u32, f1: F1, f2: F2) -> u8 where
+fn circular_sh_base<F1, F2>(byte: u8, count: u32, f1: F1, f2: F2) -> u8
+where
     F1: Fn(u8, u32) -> u8,
     F2: Fn(u8, u32) -> u8 {
     match byte {
@@ -191,7 +194,8 @@ pub fn consecutive_ones_entries_count(number: u32, consecutive_ones_count: u32) 
     Some(matches)
 }
 
-fn swap_bits_base<F>(number: u32, index1: u32, index2: u32, f: F) -> Option<u32> where
+fn swap_bits_base<F>(number: u32, index1: u32, index2: u32, f: F) -> Option<u32>
+where
     F: Fn() -> u32 {
     let limits = 0..u32::BITS;
     if ! limits.contains(&index1) || ! limits.contains(&index2) {
@@ -237,6 +241,15 @@ pub fn remove_bit(number: u32, index: u32) -> Option<u32> {
     Some(number ^ remover)
 }
 
+pub fn find_unique<'a, I, B: 'a>(vals: I) -> Option<B>
+where
+    I: IntoIterator<Item = &'a B>,
+    B: BitXor<Output = B> + Copy {
+    vals.into_iter().fold(None, |acc, &val| {
+        acc.map_or_else(|| Some(val), |acc| Some(acc ^ val))
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -272,7 +285,8 @@ mod tests {
         assert_eq!(str, String::from("1"));
     }
 
-    fn general_test_binary_ones_count<F>(f: F) where
+    fn general_test_binary_ones_count<F>(f: F)
+    where
         F: Fn(u32) -> u32 {
         let mut count = f(0b11100100);
         assert_eq!(count, 4);
@@ -297,7 +311,8 @@ mod tests {
         general_test_binary_ones_count(binary_ones_count_sub_method);
     }
 
-    fn general_test_hob<F>(f: F) where
+    fn general_test_hob<F>(f: F)
+    where
         F: Fn(u32) -> Option<u32> {
         let mut index = f(0b11100100);
         assert_eq!(index, Some(7));
@@ -342,7 +357,8 @@ mod tests {
         assert_eq!(set_bit(0b10110110000, 18), Some(263600));
     }
 
-    fn general_test_reset_bit<F>(f: F) where
+    fn general_test_reset_bit<F>(f: F)
+    where
         F: Fn(u32, u32) -> Option<u32> {
         assert_eq!(f(11, 1), Some(9));
         assert_eq!(f(9, 32), None);
@@ -444,7 +460,8 @@ mod tests {
         assert_eq!(consecutive_ones_entries_count(0, 1).unwrap(), 0);
     }
 
-    fn general_test_swap_bits<F>(f: F) where
+    fn general_test_swap_bits<F>(f: F)
+    where
         F: Fn(u32, u32, u32) -> Option<u32> {
         assert_eq!(f(0b101, 2, 2), Some(0b101));
         assert_eq!(f(0b101, 228, 2), None);
@@ -483,5 +500,14 @@ mod tests {
         assert_eq!(remove_bit(0, 0), Some(0));
         assert_eq!(remove_bit(228, 228), None);
         assert_eq!(1, (0..u32::BITS-1).fold(u32::MAX, |acc, _| remove_bit(acc, 0).unwrap()));
+    }
+
+    #[test]
+    fn test_find_unique() {
+        assert_eq!(find_unique(&[1, 0, 2, 2, 0, 228, 1]), Some(228));
+        assert_eq!(find_unique(&vec![0b110, 0b10, 0b111, 0b110, 0b10, 0b111, 0b101]), Some(0b101));
+        assert_eq!(find_unique(&[0u32; 0]), None);
+        assert_eq!(find_unique(&vec![0u32; 0]), None);
+        assert_eq!(find_unique(&Vec::<u32>::new()), None);
     }
 }
